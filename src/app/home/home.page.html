@@ -1,20 +1,58 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title> Login </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-margin ion-padding" [fullscreen]="true">
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <ion-item>
+      <ion-label position="floating">Username</ion-label>
+      <ion-input
+        type="text"
+        formControlName="username"
+        [ngClass]="{ 'is-invalid': submitted && loginForm.get('username').errors }"
+      ></ion-input>
+    </ion-item>
+    <ion-text
+      color="danger"
+      *ngIf="submitted && loginForm.get('username').errors"
+      class="ion-padding"
+    >
+      <small *ngIf="loginForm.get('username').errors.required">
+        Username is required
+      </small>s
+    </ion-text>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+    <ion-item class="ion-margin-top">
+      <ion-label position="floating">Password</ion-label>
+      <ion-input
+        type="password"
+        formControlName="password"
+        [ngClass]="{ 'is-invalid': submitted && loginForm.get('password').errors }"
+      ></ion-input>
+    </ion-item>
+    <ion-text
+      color="danger"
+      *ngIf="submitted && loginForm.get('password').errors"
+      class="ion-padding"
+    >
+      <small *ngIf="loginForm.get('password').errors.required">
+        Password is required
+      </small>
+    </ion-text>
+    <ion-button
+      [disabled]="loading"
+      class="ion-margin"
+      expand="full"
+      shape="round"
+      type="submit"
+    >
+      <ion-spinner
+        *ngIf="loading"
+        class="spinner-border spinner-border-sm mr-1"
+      ></ion-spinner>
+      <span *ngIf="!loading"> Login </span>
+    </ion-button>
+  </form>
 </ion-content>
