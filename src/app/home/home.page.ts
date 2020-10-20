@@ -1,8 +1,10 @@
-import { Component, OnInit } from "@angular/core";
+import { AfterViewInit, Component, OnInit } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { catchError, take } from "rxjs/operators";
-import { of, throwError } from "rxjs";
+import { catchError, map, take } from "rxjs/operators";
+import { Observable, of, throwError } from "rxjs";
+import { ActivatedRoute, Router } from "@angular/router";
+import { AppService } from "../services/app.service";
 
 @Component({
   selector: "app-home",
@@ -10,52 +12,43 @@ import { of, throwError } from "rxjs";
   styleUrls: ["home.page.scss"],
 })
 export class HomePage implements OnInit {
-  loading = false;
-  loginForm: FormGroup;
-  submitted: boolean;
+  userData$: Observable<any>;
 
-  constructor(public fb: FormBuilder, private http: HttpClient) {}
+  constructor(public router: Router, private service: AppService) {}
 
-  ngOnInit() {
-    this.loginForm = this.fb.group({
-      username: ["", [Validators.required]],
-      password: ["", [Validators.required]],
-    });
-  }
+  async ngOnInit() {
+    const sessionToken = await this.service.getFromStorage("session_token");
+    const storememberGuid = await this.service.getFromStorage(
+      "storemember_guid"
+    );
 
-  onSubmit() {
-    this.submitted = true;
-    if (this.loginForm.valid) {
-      this.loading = true;
-      this.http
-        .post(
-          "https://huaweiincentives.foneworx.co.za/productincentive/rest/v1/login",
-          {
-            username: this.loginForm.get("username").value,
-            password: this.loginForm.get("password").value,
-          },
-          {
-            headers: new HttpHeaders().set(
-              "Api-Key",
-              "f122491c88101ce047e40b760300ac33076344b6df36d93686918f60"
-            ),
-          }
-        )
+    console.log({ sessionToken, storememberGuid });
+    setTimeout(() => {
+      this.service.clearStorage();
+    }, 5000);
+
+    if (sessionToken) {
+      this.userData$ = this.service
+        .getUserData(sessionToken, storememberGuid)
         .pipe(
-          take(1),
-          catchError((err) => {
-            console.log("Handling error locally and rethrowing it...", err);
-            return throwError(err);
-          })
-        )
-        .subscribe((p) => {
-          console.log({ p });
-          this.loading = false;
-          // this.submitted = false;
-        });
-
-      // username: "8406065150089",
-      // password: "password",
+          map(
+            (data: any) => {
+              if (data === "error") {
+                return;
+              }
+              console.log({ data });
+              const minusProfile = { ...data.data[0] };
+              delete minusProfile.profile;
+              const profile = data.data[0].profile;
+              return { minusProfile, profile };
+            },
+            catchError(() =>
+              this.router.navigate(["login"]).catch()
+            )
+          )
+        );
+    } else {
+      this.router.navigate(["login"]).catch();
     }
   }
 }
